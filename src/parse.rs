@@ -1,5 +1,6 @@
+use core::str;
 use std::{borrow::Cow, fmt::Display, iter::Peekable};
-use miette::{miette, Error};
+use miette::miette;
 use crate::{lex::Token, Lexer};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -71,6 +72,25 @@ pub enum Atom<'de> {
     This,
 }
 
+impl Display for Atom<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Atom::String(Cow::Owned(str)) => str.to_owned(),
+                Atom::String(Cow::Borrowed(str)) => (*str).to_owned(),
+                Atom::Number(num) => num.to_string(),
+                Atom::Nil => String::from("nil"),
+                Atom::Bool(bool) => bool.to_string(),
+                Atom::Ident(str) => (*str).to_owned(),
+                Atom::Super => String::from("super"),
+                Atom::This => String::from("this"),
+            }
+        )
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expression<'de> {
     Unary {
@@ -91,7 +111,7 @@ pub enum Expression<'de> {
 }
 
 pub trait Visitor<'de, T> {
-    fn visit_expression(self, exp: Expression<'de>) -> T;
+    fn visit_expression(&self, exp: Expression<'de>) -> T;
 }
 
 pub struct Parser<'de> {
@@ -214,12 +234,83 @@ impl<'de> Parser<'de> {
 pub struct Interpreter {}
 
 impl<'de> Visitor<'de, Atom<'de>> for Interpreter {
-    fn visit_expression(self, exp: Expression<'de>) -> Atom<'de> {
+    fn visit_expression(&self, exp: Expression<'de>) -> Atom<'de> {
         match exp {
             Expression::Unary { op, right } => {
-                todo!()
+                let right = self.visit_expression(*right);
+                match op {
+                    Token::Minus => {
+                        match right {
+                            Atom::Number(num) => Atom::Number(-num),
+                            _ => todo!() //Error case
+                        }
+                    }
+                    Token::Bang => {
+                        match right {
+                            Atom::Bool(bool) => Atom::Bool(!bool),
+                            _ => Atom::Bool(true),
+                        }
+                    }
+                    _ => todo!() // Theoretically unreachable
+                }
             }
-            Expression::Binary { left, op, right } => todo!(),
+            Expression::Binary { left, op, right } => {
+                let left = self.visit_expression(*left);
+                let right = self.visit_expression(*right);
+
+                match op {
+                    Token::Greater => {
+                        match (left, right) {
+                            (Atom::Number(n1), Atom::Number(n2)) => Atom::Bool(n1 > n2),
+                            _ => todo!(),
+                        }
+                    }
+                    Token::GreaterEqual => {
+                        match (left, right) {
+                            (Atom::Number(n1), Atom::Number(n2)) => Atom::Bool(n1 >= n2),
+                            _ => todo!(),
+                        }
+                    }
+                    Token::Less => {
+                        match (left, right) {
+                            (Atom::Number(n1), Atom::Number(n2)) => Atom::Bool(n1 < n2),
+                            _ => todo!(),
+                        }
+                    }
+                    Token::LessEqual => {
+                        match (left, right) {
+                            (Atom::Number(n1), Atom::Number(n2)) => Atom::Bool(n1 <= n2),
+                            _ => todo!(),
+                        }
+                    }
+                    Token::Plus => {
+                        match (left, right) {
+                            (Atom::Number(n1), Atom::Number(n2)) => Atom::Number(n1 + n2),
+                            (Atom::String(str1), Atom::String(str2)) => Atom::String(Cow::Owned(format!("{str1}{str2}"))),
+                            _ => todo!(),
+                        }
+                    }
+                    Token::Minus => {
+                        match (left, right) {
+                            (Atom::Number(n1), Atom::Number(n2)) => Atom::Number(n1 - n2),
+                            _ => todo!(),
+                        }
+                    }
+                    Token::Slash => {
+                        match (left, right) {
+                            (Atom::Number(n1), Atom::Number(n2)) => Atom::Number(n1 / n2),
+                            _ => todo!(),
+                        }
+                    }
+                    Token::Star => {
+                        match (left, right) {
+                            (Atom::Number(n1), Atom::Number(n2)) => Atom::Number(n1 * n2),
+                            _ => todo!(),
+                        }
+                    }
+                    _ => todo!(),
+                }
+            }
             Expression::Grouping { expression } => self.visit_expression(*expression),
             Expression::Literal { literal } => literal,
         }

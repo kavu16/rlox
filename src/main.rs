@@ -1,4 +1,5 @@
 use miette::{IntoDiagnostic, WrapErr};
+use rlox::parse::{Interpreter, Visitor};
 use rlox::{Lexer, Parser};
 
 use std::env;
@@ -53,6 +54,7 @@ fn run_file(path: String) -> miette::Result<()> {
 fn run(source: String) -> miette::Result<()> {
     let parser = Parser::new(&source);
     let exp = parser.expression()?;
-    println!("{:?}", exp);
+    let interpreter = Interpreter {};
+    println!("{}", interpreter.visit_expression(exp));
     Ok(())
 }
