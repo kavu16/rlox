@@ -1,0 +1,28 @@
+// Lox testing
+// Keywords
+and class else false for fun if nil or return super this true var while
+
+// Numbers
+123
+123.456
+.456
+123.
+
+// identifiers
+andy formless fo _ _123 _abc ab123
+abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_
+
+// punctuators
+(){};,+-*!===<=>=!=<>/.
+
+// strings
+""
+"string"
+
+// whitespace
+space    tabs				newlines
+
+
+
+
+end
