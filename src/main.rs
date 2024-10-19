@@ -52,9 +52,9 @@ fn run_file(path: String) -> miette::Result<()> {
 }
 
 fn run(source: String) -> miette::Result<()> {
-    let parser = Parser::new(&source);
-    let exp = parser.expression()?;
+    let mut parser = Parser::new(&source);
+    let statements = parser.parse()?;
     let interpreter = Interpreter {};
-    println!("{}", interpreter.visit_expression(exp));
+    interpreter.interpret(statements)?;
     Ok(())
 }
